@@ -18,8 +18,8 @@ if runtime.exists() and not __package__:
 
     __package__ = Path(__file__).parent.name
 
-from .config import get_config
 from .chains import get_retrieval_qa
+from .st_utils import load_config
 
 
 class StreamHandler(BaseCallbackHandler):
@@ -94,11 +94,6 @@ def print_state_messages(msgs: StreamlitChatMessageHistory):
             st.markdown(message.content)
 
 
-@st.cache_data
-def load_config(config_path):
-    return get_config(config_path)
-
-
 @st.cache_resource
 def load_qa_chain(config):
     return get_retrieval_qa(config)
@@ -124,7 +119,7 @@ def main():
     init_messages(msgs)
     print_state_messages(msgs)
 
-    config = load_config(st.session_state["config_path"])
+    config = load_config()
     qa = load_qa_chain(config)
 
     if prompt := st.chat_input("Enter a query"):

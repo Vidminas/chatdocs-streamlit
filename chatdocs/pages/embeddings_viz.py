@@ -15,8 +15,7 @@ if runtime.exists() and not __package__:
 
     __package__ = Path(__file__).parent.name
 
-from chatdocs.config import get_config
-from chatdocs.vectorstores import get_vectorstore
+from chatdocs.st_utils import load_config, load_db, load_db_data
 
 
 # Color scheme and sizing for plot markers
@@ -28,19 +27,6 @@ COLOR_HIGHLIGHT = "rgb(231, 111, 81)"
 SIZE_DEFAULT = 5
 SIZE_RELEVANT = 10
 SIZE_HIGHLIGHT = 25
-
-
-@st.cache_resource
-def load_db(config):
-    return get_vectorstore(config)
-
-
-@st.cache_data
-def load_db_data(config):
-    db = load_db(config)
-    data = db.get(include=["metadatas", "documents", "embeddings"])
-    df = pd.DataFrame.from_dict(data)
-    return df.set_index("ids")
 
 
 @st.cache_data
@@ -82,8 +68,7 @@ def process_query(config: dict, query: str):
 
 
 def main():
-    config_path = st.session_state.get("config_path", None)
-    config = get_config(config_path)
+    config = load_config()
 
     st.sidebar.title("Options")
     view_db = st.sidebar.checkbox("View DB", value=True)
@@ -154,4 +139,5 @@ def main():
         st.plotly_chart(fig)
 
 
-main()
+if __name__ == "__main__":
+    main()
