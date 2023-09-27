@@ -1,6 +1,8 @@
 from collections import defaultdict
 
 import pandas as pd
+import numpy as np
+from sklearn.metrics.pairwise import pairwise_distances_chunked
 import streamlit as st
 
 from uuid import uuid4
@@ -86,8 +88,8 @@ class DataGrid(Dashboard.Item):
 
             with mui.Box(sx={"flex": 1, "minHeight": 0}):
                 mui.DataGrid(
-                    columns=[{ "field": "columns", "flex": 1 }],
-                    rows=[{ "id": idx, "columns": elem } for idx, elem in enumerate(data)],
+                    columns=[{ "field": f"column {column}", "flex": 1 } for column in range(len(data[0]))],
+                    rows=[{ "id": idx, **{ f"column {column}": value for (column, value) in enumerate(elem) } } for (idx, elem) in enumerate(data)],
                     checkboxSelection=True,
                     disableSelectionOnClick=True,
                     onCellEditCommit=self._handle_edit,
@@ -110,11 +112,37 @@ def reorganise_headers(data: pd.DataFrame):
     return sheets_to_columns
 
 
+@st.cache_data
+def suggested_merges(config, threshold: float, data: pd.DataFrame):
+    suggestions = []
+
+    for distances in pairwise_distances_chunked(np.vstack(data["embeddings"]), metric="cosine", n_jobs=-1):
+        candidate_pairs = np.argwhere(distances < threshold)
+
+        for c1_idx, c2_idx in candidate_pairs:
+            if c1_idx == c2_idx:
+                continue
+
+            c1 = data.iloc[c1_idx]
+            c2 = data.iloc[c2_idx]
+            if c1["metadatas"]["source"] == c2["metadatas"]["source"]:
+                continue
+            if not c1["metadatas"]["source"].endswith(".csv") or not c2["metadatas"]["source"].endswith(".csv"):
+                continue
+            if c1["metadatas"]["dtype"] != c2["metadatas"]["dtype"]:
+                continue
+            suggestions.append((c1, c2))
+        break
+    
+    return suggestions
+
+
 def main():
     config = load_config()
-    data = load_db_data(config, include=["metadatas", "documents"])
+    data = load_db_data(config)
     sheets_to_columns = reorganise_headers(data)
 
+    st.header("All spreadsheet columns")
     st.dataframe(pd.DataFrame.from_dict(sheets_to_columns, orient="index").T)
 
     if "w" not in st.session_state:
@@ -125,8 +153,9 @@ def main():
         board = Dashboard()
         w = SimpleNamespace(
             dashboard=board,
+            suggested_merges=DataGrid(board, 0, 0, GRID_COLUMNS, ELEM_HEIGHT, isDraggable=False),
             **{
-                f"data_grid_{sheet}": DataGrid(board, (idx * ELEM_WIDTH) % GRID_COLUMNS, (idx * ELEM_HEIGHT) / GRID_COLUMNS, ELEM_WIDTH, ELEM_HEIGHT, minH=4)
+                f"data_grid_{sheet}": DataGrid(board, (idx * ELEM_WIDTH) % GRID_COLUMNS, ELEM_HEIGHT + (idx * ELEM_HEIGHT) / GRID_COLUMNS, ELEM_WIDTH, ELEM_HEIGHT, minH=4)
                 for idx, sheet in enumerate(sheets_to_columns)
             }
         )
@@ -136,6 +165,9 @@ def main():
 
     with elements("dashboard"):
         with w.dashboard(rowHeight=57):
+            threshold = st.sidebar.slider("Header similarity threshold", value=0.02, min_value=0.0, max_value=0.1)
+            w.suggested_merges("Suggested column merges", [(c1["documents"], c1["metadatas"]["source"], c2["documents"], c2["metadatas"]["source"]) for c1, c2 in suggested_merges(config, threshold, data)])
+
             for sheet, sheet_data in sheets_to_columns.items():
                 getattr(w, f"data_grid_{sheet}")(sheet, sheet_data)
             
