@@ -93,7 +93,7 @@ def main():
         colors = [COLOR_DEFAULT] * num_docs
 
         if query:
-            embedded_query, relevant_ids, relevance_scores = process_query(
+            embedded_query, relevant_ids, distances = process_query(
                 config, query
             )
             query_data_row = pd.DataFrame.from_dict(
@@ -108,8 +108,8 @@ def main():
             sizes.append(SIZE_HIGHLIGHT)
             colors.append(COLOR_HIGHLIGHT)
 
-            for id, relevance_score in zip(relevant_ids, relevance_scores):
-                db_data["documents"][id] += f"\n\nRelevance score: {relevance_score}"
+            for id, distance in zip(relevant_ids, distances):
+                db_data["documents"][id] += f"\n\nDistance: {distance}"
                 idx = db_data.index.get_loc(id)
                 sizes[idx] = SIZE_RELEVANT
                 colors[idx] = COLOR_RELEVANT
