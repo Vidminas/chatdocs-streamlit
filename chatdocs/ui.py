@@ -111,7 +111,6 @@ def main():
 
     st.session_state["config_path"] = args.config_path
 
-    st.set_page_config(page_title="ChatDocs", page_icon="📚")
     st.title("ChatDocs")
     st.sidebar.title("Options")
 
@@ -137,4 +136,5 @@ def main():
 
 
 if __name__ == "__main__":
+    st.set_page_config(page_title="ChatDocs", page_icon="📚")
     main()

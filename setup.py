@@ -39,6 +39,7 @@ setup(
         "typing-extensions>=4.4.0,<5.0.0",
         # UI
         "streamlit>=1.26.0",
+        "streamlit-elements==0.1.*",
         "plotly>=5.17.0",
         # Document Loaders
         "extract-msg>=0.41.0,<0.42.0",
