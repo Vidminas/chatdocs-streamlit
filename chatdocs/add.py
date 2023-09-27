@@ -5,7 +5,6 @@ from multiprocessing import Pool
 
 from tqdm import tqdm
 from langchain.document_loaders import (
-    CSVLoader,
     EverNoteLoader,
     TextLoader,
     UnstructuredEmailLoader,
@@ -20,6 +19,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 
 from .document_loaders.nougat_loader import NougatPDFLoader
+from .document_loaders.spreadsheet_header_loader import SpreadsheetHeaderLoader
 from .vectorstores import get_vectorstore, get_vectorstore_from_documents
 
 
@@ -48,7 +48,10 @@ class MyElmLoader(UnstructuredEmailLoader):
 
 # Map file extensions to document loaders and their arguments
 LOADER_MAPPING = {
-    ".csv": (CSVLoader, {"encoding": "utf8"}),
+    ".csv": (
+        SpreadsheetHeaderLoader,
+        {"encoding": "utf8"},
+    ),
     # ".docx": (Docx2txtLoader, {}),
     ".doc": (UnstructuredWordDocumentLoader, {}),
     ".docx": (UnstructuredWordDocumentLoader, {}),
