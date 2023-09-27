@@ -7,7 +7,7 @@ import streamlit as st
 
 from uuid import uuid4
 from abc import ABC, abstractmethod
-from streamlit_elements import dashboard, mui, elements
+from streamlit_elements import dashboard, mui, elements, sync
 from contextlib import contextmanager
 from types import SimpleNamespace
 
@@ -87,12 +87,16 @@ class DataGrid(Dashboard.Item):
                 mui.Typography(title)
 
             with mui.Box(sx={"flex": 1, "minHeight": 0}):
+                self.columns = [{ "field": f"column {column}", "flex": 1 } for column in range(len(data[0]))]
+                self.rows = [{ "id": idx, **{ f"column {column}": value for (column, value) in enumerate(elem) } } for (idx, elem) in enumerate(data)]
+
                 mui.DataGrid(
-                    columns=[{ "field": f"column {column}", "flex": 1 } for column in range(len(data[0]))],
-                    rows=[{ "id": idx, **{ f"column {column}": value for (column, value) in enumerate(elem) } } for (idx, elem) in enumerate(data)],
+                    columns=self.columns,
+                    rows=self.rows,
                     checkboxSelection=True,
                     disableSelectionOnClick=True,
                     onCellEditCommit=self._handle_edit,
+                    onSelectionModelChange=sync("selected_rows"),
                 )
 
 
@@ -137,6 +141,12 @@ def suggested_merges(config, threshold: float, data: pd.DataFrame):
     return suggestions
 
 
+def save_merges(datagrid):
+    selected_rows = st.session_state.get("selected_rows", [])
+    for row in selected_rows:
+        print(datagrid.rows[row])
+
+
 def main():
     config = load_config()
     data = load_db_data(config)
@@ -145,31 +155,41 @@ def main():
     st.header("All spreadsheet columns")
     st.dataframe(pd.DataFrame.from_dict(sheets_to_columns, orient="index").T)
 
-    if "w" not in st.session_state:
+    if "w1" not in st.session_state:
         GRID_COLUMNS = 12
         ELEM_HEIGHT = 6
         ELEM_WIDTH = 4
 
-        board = Dashboard()
-        w = SimpleNamespace(
-            dashboard=board,
-            suggested_merges=DataGrid(board, 0, 0, GRID_COLUMNS, ELEM_HEIGHT, isDraggable=False),
+        board1 = Dashboard()
+        w1 = SimpleNamespace(
+            dashboard=board1,
+            suggested_merges=DataGrid(board1, 0, 0, GRID_COLUMNS, ELEM_HEIGHT, isDraggable=False),
+        )
+        st.session_state.w1 = w1
+
+        board2 = Dashboard()
+        w2 = SimpleNamespace(
+            dashboard=board2,
             **{
-                f"data_grid_{sheet}": DataGrid(board, (idx * ELEM_WIDTH) % GRID_COLUMNS, ELEM_HEIGHT + (idx * ELEM_HEIGHT) / GRID_COLUMNS, ELEM_WIDTH, ELEM_HEIGHT, minH=4)
+                f"data_grid_{sheet}": DataGrid(board2, (idx * ELEM_WIDTH) % GRID_COLUMNS, (idx * ELEM_HEIGHT) / GRID_COLUMNS, ELEM_WIDTH, ELEM_HEIGHT, minH=4)
                 for idx, sheet in enumerate(sheets_to_columns)
             }
         )
-        st.session_state.w = w
+        st.session_state.w2 = w2
+
     else:
-        w = st.session_state.w
+        w1 = st.session_state.w1
+        w2 = st.session_state.w2
 
     with elements("dashboard"):
-        with w.dashboard(rowHeight=57):
+        with w1.dashboard(rowHeight=57):
             threshold = st.sidebar.slider("Header similarity threshold", value=0.02, min_value=0.0, max_value=0.1)
-            w.suggested_merges("Suggested column merges", [(c1["documents"], c1["metadatas"]["source"], c2["documents"], c2["metadatas"]["source"]) for c1, c2 in suggested_merges(config, threshold, data)])
+            w1.suggested_merges("Suggested column merges", [(c1["documents"], c1["metadatas"]["source"], c2["documents"], c2["metadatas"]["source"]) for c1, c2 in suggested_merges(config, threshold, data)])
+            mui.Button("Save merges", isDraggable=False, onClick=lambda: save_merges(w1.suggested_merges))
 
+        with w2.dashboard(rowHeight=57):
             for sheet, sheet_data in sheets_to_columns.items():
-                getattr(w, f"data_grid_{sheet}")(sheet, sheet_data)
+                getattr(w2, f"data_grid_{sheet}")(sheet, sheet_data)
             
 
 if __name__ == "__main__":
