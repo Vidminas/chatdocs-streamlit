@@ -84,6 +84,7 @@ def main():
         n_components = st.sidebar.radio(
             "Dimensions", (2, 3), format_func=lambda dim: f"{dim}D"
         )
+        show_labels = st.sidebar.checkbox("Show labels", value=False)
         query = st.sidebar.text_input("Query (optional)")
 
         db_data = load_db_data(config)
@@ -119,7 +120,7 @@ def main():
         scatter_kwargs = dict(
             x=data[:, 0],
             y=data[:, 1],
-            mode="markers",
+            mode="markers" if not show_labels else "markers+text",
             text=labels,
             marker=dict(color=colors, size=sizes),
         )
