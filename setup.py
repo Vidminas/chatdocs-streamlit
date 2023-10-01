@@ -24,7 +24,7 @@ setup(
     },
     install_requires=[
         "accelerate>=0.20.3",
-        "chromadb>=0.3.0,<0.4.0",
+        "chromadb>=0.3.29,<0.4.0",
         "ctransformers>=0.2.25,<0.3.0",
         "deepmerge>=1.1.0,<2.0.0",
         "InstructorEmbedding>=1.0.1,<2.0.0",
@@ -40,6 +40,7 @@ setup(
         # UI
         "streamlit>=1.26.0",
         "streamlit-elements==0.1.*",
+        "streamlit-timeline>=0.0.2",
         "plotly>=5.17.0",
         # Document Loaders
         "extract-msg>=0.41.0,<0.42.0",
@@ -47,8 +48,6 @@ setup(
         "pypandoc>=1.11,<2.0.0",
         "nougat-ocr==0.1.9", # needs specific version to avoid ERROR:root:daemonic processes are not allowed to have children
         "unstructured>=0.6.0,<0.7.0",
-        # Temporary fix for `rich`, `numpy` version conflicts.
-        "argilla==1.8.0",
     ],
     extras_require={
         "tests": [

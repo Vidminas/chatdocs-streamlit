@@ -23,6 +23,9 @@ if runtime.exists() and not __package__:
 from chatdocs.st_utils import load_config, load_db_data
 
 
+KEY_MERGE_HEADERS = "merge_headers"
+
+
 class Dashboard:
     DRAGGABLE_CLASS = "draggable"
 
@@ -201,7 +204,7 @@ def save_merges(datagrid):
             )
         )
 
-    st.session_state["merges"] = merges
+    st.session_state[KEY_MERGE_HEADERS] = merges
 
 
 def main():
