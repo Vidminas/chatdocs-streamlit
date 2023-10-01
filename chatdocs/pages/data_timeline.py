@@ -13,30 +13,8 @@ if runtime.exists() and not __package__:
 
     __package__ = Path(__file__).parent.name
 
-from chatdocs.st_utils import load_config, load_db, load_db_data
+from chatdocs.st_utils import load_config, load_db_data, best_columns_for
 from .data_merging import reorganise_headers
-
-
-@st.cache_data
-def best_datetime_columns(config, query: str, sheets_to_columns: dict):
-    datetime_columns = {}
-
-    db = load_db(config)
-
-    for file in sheets_to_columns:
-        # See Chroma docs for filter syntax: https://docs.trychroma.com/usage-guide
-        # although currently the langchain vectorstore doesn't work with Chroma v4 properly
-        # while the docs include some new features
-        candidates = db.similarity_search(query, filter={"source": {"$eq": file}})
-        candidates = [
-            c.page_content
-            for c in candidates
-            if c.metadata["dtype"] in ("datetime64[ns]", "datetime64[ns, UTC]")
-        ]
-        if len(candidates) > 0:
-            datetime_columns[file] = candidates[0]
-
-    return datetime_columns
 
 
 @st.cache_data
@@ -76,6 +54,7 @@ def make_timeline_json(
                     except (pd.errors.ParserError, TypeError, ValueError):
                         continue
 
+                # https://timeline.knightlab.com/docs/json-format.html
                 items.append(
                     {
                         "unique_id": f"{file}-{row.Index}",
@@ -107,7 +86,7 @@ def main():
     loaded_data = load_csv_files(dir, sheets_to_columns)
 
     datetime_query = st.sidebar.text_input("Datetime header query", value="datetime")
-    datetime_columns = best_datetime_columns(config, datetime_query, sheets_to_columns)
+    datetime_columns = best_columns_for(config, datetime_query, list(sheets_to_columns.keys()), ("datetime64[ns]", "datetime64[ns, UTC]")) 
 
     limit = st.sidebar.number_input("Item limit per-file", value=100)
     json = make_timeline_json(sheets_to_columns, datetime_columns, loaded_data, limit)

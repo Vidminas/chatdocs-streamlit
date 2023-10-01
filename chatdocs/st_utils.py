@@ -21,3 +21,24 @@ def load_db_data(config, include=["metadatas", "documents", "embeddings"]):
     data = db.get(include=include)
     df = pd.DataFrame.from_dict(data)
     return df.set_index("ids")
+
+
+@st.cache_data
+def best_columns_for(config, query: str, files: list, dtypes: tuple):
+    columns = {}
+    db = load_db(config)
+
+    for file in files:
+        # See Chroma docs for filter syntax: https://docs.trychroma.com/usage-guide
+        # although currently the langchain vectorstore doesn't work with Chroma v4 properly
+        # while the docs include some new features
+        candidates = db.similarity_search(query, filter={"source": {"$eq": file}})
+        candidates = [
+            c.page_content
+            for c in candidates
+            if c.metadata["dtype"] in dtypes
+        ]
+        if len(candidates) > 0:
+            columns[file] = candidates[0]
+
+    return columns
