@@ -4,7 +4,6 @@ from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances_chunked
-import streamlit as st
 
 from uuid import uuid4
 from abc import ABC, abstractmethod
@@ -12,6 +11,7 @@ from streamlit_elements import dashboard, mui, elements, sync
 from contextlib import contextmanager
 from types import SimpleNamespace
 
+import streamlit as st
 from streamlit import runtime
 
 # allow relative imports when running with streamlit
@@ -20,7 +20,7 @@ if runtime.exists() and not __package__:
 
     __package__ = Path(__file__).parent.name
 
-from chatdocs.st_utils import load_config, load_db, load_db_data
+from chatdocs.st_utils import load_config, load_db_data
 
 
 class Dashboard:
@@ -154,7 +154,7 @@ def reorganise_headers(data: pd.DataFrame):
 
 
 @st.cache_data
-def suggested_merges(config, threshold: float, data: pd.DataFrame):
+def suggested_merges(threshold: float, data: pd.DataFrame):
     suggestions = []
 
     for distances in pairwise_distances_chunked(
@@ -194,10 +194,12 @@ def save_merges(datagrid):
 
     for row in selected_rows:
         data = datagrid.rows[row]
-        merges.append((
-            CSVHeader(data["column 0"], data["column 1"]),
-            CSVHeader(data["column 2"], data["column 3"])
-        ))
+        merges.append(
+            (
+                CSVHeader(data["column 0"], data["column 1"]),
+                CSVHeader(data["column 2"], data["column 3"]),
+            )
+        )
 
     st.session_state["merges"] = merges
 
@@ -257,7 +259,7 @@ def main():
                     c2["documents"],
                     c2["metadatas"]["source"],
                 )
-                for c1, c2 in suggested_merges(config, threshold, data)
+                for c1, c2 in suggested_merges(threshold, data)
             ]
             w1.suggested_merges(
                 "Suggested column merges", merge_rows, selectionStateKey="selected_rows"
