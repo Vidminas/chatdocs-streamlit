@@ -86,7 +86,9 @@ def main():
     loaded_data = load_csv_files(dir, sheets_to_columns)
 
     datetime_query = st.sidebar.text_input("Datetime header query", value="datetime")
-    datetime_columns = best_columns_for(config, datetime_query, list(sheets_to_columns.keys()), ("datetime64[ns]", "datetime64[ns, UTC]")) 
+    datetime_columns = best_columns_for(config, datetime_query, list(sheets_to_columns.keys()), ("datetime64[ns]", "datetime64[ns, UTC]"))
+
+    st.dataframe(datetime_columns)
 
     limit = st.sidebar.number_input("Item limit per-file", value=100)
     json = make_timeline_json(sheets_to_columns, datetime_columns, loaded_data, limit)
