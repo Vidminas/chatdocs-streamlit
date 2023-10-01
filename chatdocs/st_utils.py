@@ -1,3 +1,5 @@
+import glob
+
 import pandas as pd
 import streamlit as st
 
@@ -42,3 +44,23 @@ def best_columns_for(config, query: str, files: list, dtypes: tuple):
             columns[file] = candidates[0]
 
     return columns
+
+
+@st.cache_data
+def load_csv_files(pattern: str, sheets_to_columns: dict[str, list]):
+    data_files = glob.glob(pattern, recursive=True)
+    loaded_data = {}
+
+    for file in data_files:
+        columns = sheets_to_columns[file]
+        csv_data = pd.read_csv(file, encoding="utf-8")
+
+        for cname, ctype in columns:
+            try:
+                csv_data[cname] = csv_data[cname].astype(ctype)
+            except (pd.errors.ParserError, TypeError, ValueError) as e:
+                print(f"Couldn't convert column {cname} to expected type {ctype}: {e}")
+
+        loaded_data[file] = csv_data
+
+    return loaded_data

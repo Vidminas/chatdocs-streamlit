@@ -1,4 +1,3 @@
-import glob
 import os
 
 import pandas as pd
@@ -11,28 +10,8 @@ if runtime.exists() and not __package__:
 
     __package__ = Path(__file__).parent.name
 
-from chatdocs.st_utils import load_config, load_db_data, best_columns_for
+from chatdocs.st_utils import load_config, load_db_data, best_columns_for, load_csv_files
 from .data_merging import reorganise_headers
-
-
-@st.cache_data
-def load_csv_files(dir: str, sheets_to_columns: dict[str, list]):
-    data_files = glob.glob(os.path.join(dir, "**/*.csv"), recursive=True)
-    loaded_data = {}
-
-    for file in data_files:
-        columns = sheets_to_columns[file]
-        csv_data = pd.read_csv(file, encoding="utf-8")
-
-        for cname, ctype in columns:
-            try:
-                csv_data[cname] = csv_data[cname].astype(ctype)
-            except (pd.errors.ParserError, TypeError, ValueError) as e:
-                print(f"Couldn't convert column {cname} to expected type {ctype}: {e}")
-
-        loaded_data[file] = csv_data
-
-    return loaded_data
 
 
 @st.cache_data
@@ -57,7 +36,7 @@ def main():
     files = list(sheets_to_columns.keys())
 
     dir = st.sidebar.text_input("Data directory", value="Frankenstein Drivers")
-    loaded_data = load_csv_files(dir, sheets_to_columns)
+    loaded_data = load_csv_files(os.path.join(dir, "**/*.csv"), sheets_to_columns)
 
     lat_query = st.sidebar.text_input("Latitude header query", value="lat")
     lon_query = st.sidebar.text_input("Longitude header query", value="lon")
