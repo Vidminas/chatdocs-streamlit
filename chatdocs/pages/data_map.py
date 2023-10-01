@@ -10,14 +10,17 @@ if runtime.exists() and not __package__:
 
     __package__ = Path(__file__).parent.name
 
-from chatdocs.st_utils import load_config, load_db_data, best_columns_for, load_csv_files
-from .data_merging import reorganise_headers
+from chatdocs.st_utils import (
+    load_config,
+    load_db_data,
+    best_columns_for,
+    reorganise_headers,
+    load_csv_files,
+)
 
 
 @st.cache_data
-def make_lat_lon_df(
-    files, lat_columns, lon_columns, data: dict[str, pd.DataFrame]
-):
+def make_lat_lon_df(files, lat_columns, lon_columns, data: dict[str, pd.DataFrame]):
     latlonlist = []
 
     for file in files:

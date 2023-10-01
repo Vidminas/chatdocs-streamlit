@@ -1,4 +1,5 @@
 import glob
+from collections import defaultdict
 
 import pandas as pd
 import streamlit as st
@@ -36,14 +37,28 @@ def best_columns_for(config, query: str, files: list, dtypes: tuple):
         # while the docs include some new features
         candidates = db.similarity_search(query, filter={"source": {"$eq": file}})
         candidates = [
-            c.page_content
-            for c in candidates
-            if c.metadata["dtype"] in dtypes
+            c.page_content for c in candidates if c.metadata["dtype"] in dtypes
         ]
         if len(candidates) > 0:
             columns[file] = candidates[0]
 
     return columns
+
+
+@st.cache_data
+def reorganise_headers(data: pd.DataFrame):
+    sheets_to_columns = defaultdict(list)
+
+    for row in data.itertuples(index=False):
+        source = row.metadatas["source"]
+        if not source.endswith(".csv"):
+            continue
+
+        header = row.documents
+        dtype = row.metadatas["dtype"]
+        sheets_to_columns[source].append((header, dtype))
+
+    return sheets_to_columns
 
 
 @st.cache_data

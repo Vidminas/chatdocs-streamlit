@@ -1,15 +1,13 @@
-from collections import defaultdict
+from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from dataclasses import dataclass
+from types import SimpleNamespace
 
 import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances_chunked
-
 from uuid import uuid4
-from abc import ABC, abstractmethod
 from streamlit_elements import dashboard, mui, elements, sync
-from contextlib import contextmanager
-from types import SimpleNamespace
 
 import streamlit as st
 from streamlit import runtime
@@ -20,7 +18,7 @@ if runtime.exists() and not __package__:
 
     __package__ = Path(__file__).parent.name
 
-from chatdocs.st_utils import load_config, load_db_data
+from chatdocs.st_utils import load_config, load_db_data, reorganise_headers
 
 
 KEY_MERGE_HEADERS = "merge_headers"
@@ -138,22 +136,6 @@ class DataGrid(Dashboard.Item):
                     onCellEditCommit=self._handle_edit,
                     **selection_kwargs,
                 )
-
-
-@st.cache_data
-def reorganise_headers(data: pd.DataFrame):
-    sheets_to_columns = defaultdict(list)
-
-    for row in data.itertuples(index=False):
-        source = row.metadatas["source"]
-        if not source.endswith(".csv"):
-            continue
-
-        header = row.documents
-        dtype = row.metadatas["dtype"]
-        sheets_to_columns[source].append((header, dtype))
-
-    return sheets_to_columns
 
 
 @st.cache_data

@@ -12,8 +12,13 @@ if runtime.exists() and not __package__:
 
     __package__ = Path(__file__).parent.name
 
-from chatdocs.st_utils import load_config, load_db_data, best_columns_for, load_csv_files
-from .data_merging import reorganise_headers
+from chatdocs.st_utils import (
+    load_config,
+    load_db_data,
+    best_columns_for,
+    reorganise_headers,
+    load_csv_files,
+)
 
 
 @st.cache_data
@@ -29,7 +34,9 @@ def make_timeline_json(
                 date = getattr(row, datetime_columns[file])
                 if not isinstance(date, pd.Timestamp):
                     try:
-                        date = pd.to_datetime(date, infer_datetime_format=True, errors="raise")
+                        date = pd.to_datetime(
+                            date, infer_datetime_format=True, errors="raise"
+                        )
                     except (pd.errors.ParserError, TypeError, ValueError):
                         continue
 
@@ -65,7 +72,12 @@ def main():
     loaded_data = load_csv_files(os.path.join(dir, "**/*.csv"), sheets_to_columns)
 
     datetime_query = st.sidebar.text_input("Datetime header query", value="datetime")
-    datetime_columns = best_columns_for(config, datetime_query, list(sheets_to_columns.keys()), ("datetime64[ns]", "datetime64[ns, UTC]"))
+    datetime_columns = best_columns_for(
+        config,
+        datetime_query,
+        list(sheets_to_columns.keys()),
+        ("datetime64[ns]", "datetime64[ns, UTC]"),
+    )
 
     st.dataframe(datetime_columns)
 
