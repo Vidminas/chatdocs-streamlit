@@ -12,7 +12,7 @@ class SpreadsheetHeaderLoader(BaseLoader):
         encoding: Optional[str] = None,
         csv_args: Optional[dict] = {
             "low_memory": False,
-            "nrows": 25,
+            "nrows": 1000,
         },
     ):
         """
@@ -22,7 +22,7 @@ class SpreadsheetHeaderLoader(BaseLoader):
             csv_args: A dictionary of arguments to pass to the pd.read_csv.
               Optional. Defaults to {
                 "low_memory": False,
-                "nrows": 25,
+                "nrows": 1000,
             },
         """
         self.file_path = file_path
@@ -30,7 +30,8 @@ class SpreadsheetHeaderLoader(BaseLoader):
         self.csv_args = csv_args or {}
 
     def convert_column_to_datetime(self, column):
-        if not pd.api.types.is_object_dtype(column.dtype):
+        if (not pd.api.types.is_object_dtype(column.dtype) and
+            not pd.api.types.is_string_dtype(column.dtype)):
             return None
 
         try:
@@ -44,8 +45,8 @@ class SpreadsheetHeaderLoader(BaseLoader):
 
         docs = []
         csv = pd.read_csv(self.file_path, encoding=self.encoding, **self.csv_args)
-        csv = csv.infer_objects()
-        
+        csv = csv.convert_dtypes()
+
         for cname in csv.columns:
             converted = self.convert_column_to_datetime(csv[cname])
             if converted is not None:
