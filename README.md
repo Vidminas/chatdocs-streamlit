@@ -51,6 +51,8 @@ Run `pip install https://github.com/Vidminas/chatdocs-streamlit`
 2. `pip install ctransformers[cuda]`
 3. `pip install https://github.com/Vidminas/chatdocs-streamlit`
 
+If pip takes too long to resolve dependency versions, you can also use `pip install https://github.com/Vidminas/chatdocs-streamlit --use-deprecated=legacy-resolver`. This may result in some dependency version conflicts, but should be fine to ignore (some libraries just haven't updated the supported version bounds for their dependencies).
+
 Download the AI models using:
 
 ```sh

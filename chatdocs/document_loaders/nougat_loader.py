@@ -89,7 +89,7 @@ class NougatPDFLoader(BasePDFLoader):
         for page_num, (sample, is_last_page) in enumerate(
             tqdm(
                 dataloader,
-                desc="Processing file {dataset.name} with {dataset.size} pages",
+                desc=f"Processing file {dataset.name} with {dataset.size} pages",
                 ncols=80,
                 position=0,
                 leave=True,
