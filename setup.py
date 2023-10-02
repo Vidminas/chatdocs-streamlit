@@ -28,13 +28,13 @@ setup(
         "ctransformers>=0.2.25,<0.3.0",
         "deepmerge>=1.1.0,<2.0.0",
         "InstructorEmbedding>=1.0.1,<2.0.0",
-        "langchain>=0.0.295",
+        "langchain>=0.0.305",
         "pydantic>=1.9,<2.0",
         "pyyaml>=6.0",
         "sentence-transformers>=2.2.2,<3.0.0",
         "scikit-learn>=1.3.0",
         "tqdm>=4.64.1,<5.0.0",
-        "transformers>=4.32.0",
+        "transformers>=4.33.0",
         "typer>=0.9.0",
         "typing-extensions>=4.4.0,<5.0.0",
         # UI
@@ -42,12 +42,18 @@ setup(
         "streamlit-elements==0.1.*",
         "streamlit-timeline>=0.0.2",
         "plotly>=5.17.0",
+        "ydata-profiling>=4.5.1",
+        "matplotlib<3.8.0", # ydata-profiling requires matplotlib.cbook.mplDeprecation
+        "streamlit-pandas-profiling>=0.1.3",
         # Document Loaders
         "extract-msg>=0.41.0,<0.42.0",
         "pandoc>=2.3,<3.0.0",
         "pypandoc>=1.11,<2.0.0",
         "nougat-ocr==0.1.9", # needs specific version to avoid ERROR:root:daemonic processes are not allowed to have children
         "unstructured>=0.6.0,<0.7.0",
+        # To restrict dependency versions to try
+        "altair>=5.1.0",
+        "contourpy>=1.1.0",
     ],
     extras_require={
         "tests": [
