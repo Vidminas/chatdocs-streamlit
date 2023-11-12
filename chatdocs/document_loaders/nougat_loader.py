@@ -54,7 +54,7 @@ class NougatPDFLoader(BasePDFLoader):
             self.batch_size = 1
             logger.warning("No GPU found. Conversion on CPU is very slow.")
 
-        self.model = move_to_device(self.model)
+        self.model = move_to_device(self.model, bf16=False)
         self.model.eval()
 
     def load(self) -> list[Document]:

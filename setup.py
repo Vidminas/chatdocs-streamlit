@@ -49,7 +49,7 @@ setup(
         "extract-msg>=0.41.0,<0.42.0",
         "pandoc>=2.3,<3.0.0",
         "pypandoc>=1.11,<2.0.0",
-        "nougat-ocr==0.1.9", # needs specific version to avoid ERROR:root:daemonic processes are not allowed to have children
+        "nougat-ocr>=0.1.12",
         "unstructured>=0.6.0,<0.7.0",
         # To restrict dependency versions to try
         "altair>=5.1.0",
