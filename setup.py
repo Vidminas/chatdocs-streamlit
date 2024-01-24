@@ -38,6 +38,9 @@ setup(
         "transformers>=4.35.0",
         "typer>=0.9.0",
         "typing-extensions>=4.4.0,<5.0.0",
+        # Solid
+        "SolidClientCredentials>=1.0.0",
+        "rdflib>=7.0.0",
         # UI
         "streamlit>=1.29.0",
         "plotly>=5.17.0",

@@ -1,8 +1,9 @@
 import argparse
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import langchain  # unused but needed to avoid circular import errors
+from langchain_core.chat_history import BaseChatMessageHistory
 from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
 from langchain.callbacks import StreamingStdOutCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
@@ -21,6 +22,7 @@ if runtime.exists() and not __package__:
 
 from .chains import make_conversation_chain
 from .st_utils import load_config
+from memory.solid_message_history import SolidChatMessageHistory, CssAccount, create_css_account
 
 
 class StreamHandler(BaseCallbackHandler):
@@ -81,19 +83,19 @@ class PrintRetrievalHandler(BaseCallbackHandler):
         self.status.update(state="complete")
 
 
-def init_messages(msgs: StreamlitChatMessageHistory) -> None:
+def init_messages(history: BaseChatMessageHistory) -> None:
     clear_button = st.sidebar.button("Clear Conversation", key="clear")
-    if clear_button or len(msgs.messages) == 0:
-        msgs.clear()
+    if clear_button or len(history.messages) == 0:
+        history.clear()
 
 
-def print_state_messages(msgs: StreamlitChatMessageHistory):
+def print_state_messages(history: BaseChatMessageHistory):
     roles = {
         "human": "user",
         "ai": "assistant",
     }
 
-    for message in msgs.messages:
+    for message in history.messages:
         with st.chat_message(roles[message.type]):
             st.markdown(message.content)
 
@@ -101,6 +103,17 @@ def print_state_messages(msgs: StreamlitChatMessageHistory):
 @st.cache_resource
 def load_llm(config, selected_llm):
     return make_conversation_chain(config, selected_llm_index=selected_llm)
+
+
+@st.cache_data
+def create_random_solid_account(css_base_url: str) -> CssAccount:
+    name = f"test-{uuid4()}"
+    email = f"{name}@example.org"
+    password = "12345"
+
+    return create_css_account(
+        css_base_url=css_base_url, name=name, email=email, password=password
+    )
 
 
 def main():
@@ -119,9 +132,16 @@ def main():
     st.title("ChatDocs")
     st.sidebar.title("Options")
 
-    msgs = StreamlitChatMessageHistory(key="messages")
-    init_messages(msgs)
-    print_state_messages(msgs)
+    solid_server_url = st.sidebar.text_input("Solid Server URL", "https://localhost:1234/")
+    css_account = create_random_solid_account(solid_server_url)
+
+    history_type = st.sidebar.radio("Message history", ("Local", "Solid"))
+    if history_type == "Local":
+        history = StreamlitChatMessageHistory(key="messages")
+    else:
+        history = SolidChatMessageHistory(solid_server_url, css_account)
+    init_messages(history)
+    print_state_messages(history)
 
     config = load_config()
     selected_llm = st.sidebar.radio("LLM", range(len(config["llms"])), format_func=lambda idx: config["llms"][idx]["model"])
@@ -130,16 +150,16 @@ def main():
     if prompt := st.chat_input("Enter a query"):
         with st.chat_message("user"):
             st.markdown(prompt)
-        msgs.add_user_message(prompt)
+        history.add_user_message(prompt)
 
         retrieve_callback = PrintRetrievalHandler(st.container())
         print_callback = StreamHandler(st.empty())
         stdout_callback = StreamingStdOutCallbackHandler()
         response = llm(
-            { "question": prompt, "chat_history": msgs.messages },
+            { "question": prompt, "chat_history": history.messages },
             callbacks=[retrieve_callback, print_callback, stdout_callback],
         )
-        msgs.add_ai_message(response["answer"])
+        history.add_ai_message(response["answer"])
 
 
 if __name__ == "__main__":
